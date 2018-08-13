@@ -27,11 +27,13 @@ class Csv:
         return header_row, rows
 
 
-def convert_spss(spss_file_name, output_file_name, separator="\t"):
+def convert_spss(spss_file_path, output_file_path, separator="\t"):
     conversion_script = "spss_to_table.R"
-    cmd = ['Rscript', conversion_script] + [spss_file_name, output_file_name, separator]
+    cmd = ['Rscript', conversion_script] + [spss_file_path, output_file_path, separator]
     x = subprocess.check_output(cmd, universal_newlines= True)
     if x is not None: print x
+
+
 
 
 

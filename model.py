@@ -58,7 +58,7 @@ class Pathway:
         math_courses_list = []
         for each_key in sorted(self.semester_courses_dict):
             for each_course in self.semester_courses_dict[each_key]:
-                if each_course in math_courses_set:
+                if each_course in MATH_COURSES_SET:
                     math_courses_list.append( (each_course, each_key) )
         return math_courses_list
 

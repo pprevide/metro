@@ -1,6 +1,6 @@
 .PHONY: show
 show:
-	@echo "SHowing!"
+	@echo "Showing!"
 
 .PHONY: clean
 clean:  

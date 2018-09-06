@@ -1,5 +1,11 @@
 import csv
 import subprocess
+import pandas as pd
+import os
+import shutil
+
+from constants import PERSONAL_INFO_COLUMN_NAMES_LIST
+
 
 class Csv:
     def __init__(self, csv_file,
@@ -37,6 +43,33 @@ class Csv:
         if x is not None:
             print x
             return output_file_path
+
+    @staticmethod
+    def remove_columns(path, columns=None, anonymize = True, make_backups = True):
+        if columns is None: columns = []
+        if anonymize: columns.extend(PERSONAL_INFO_COLUMN_NAMES_LIST)
+        files = []
+        if os.path.isfile(path):
+            files.extend(path)
+        elif os.path.isdir(path):
+            files.extend([f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f))])
+        else:
+            raise TypeError("remove_columns() requires a file name or directory name")
+        for file_name in files:
+            if make_backups:
+                shutil.copyfile(file_name, "_original_file_" + file_name)
+            table_df = pd.read_csv(file_name)
+            if isinstance(columns, basestring):
+                columns = [columns]
+            table_df.drop(labels=columns, axis=1, inplace=True)
+            table_df.to_csv(file_name, index=False)
+        return files
+
+
+
+
+
+
 
 
 

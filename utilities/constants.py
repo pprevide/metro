@@ -75,5 +75,5 @@ GRADE_OUTCOME_DICT = {
 
 VALID_LEVELS_SET = {"Freshman", "Sophomore", "Junior", "Senior"}
 
-
+PERSONAL_INFO_COLUMN_NAMES_LIST = {"First Name", "Last Name", "Address", "Phone Number"}
 

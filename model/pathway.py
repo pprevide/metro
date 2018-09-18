@@ -1,6 +1,10 @@
 import collections
 from utilities.other_constants import *
+from utilities.file_constants import PATHWAYS_FILE
 from utilities.tables import Csv
+from configuration import DATA_DIR
+import os
+
 
 
 class Pathway:
@@ -21,7 +25,7 @@ class Pathway:
         self.first_math_semester = self.get_first_math_semester()
 
     @staticmethod
-    def make_cohort_pathway_dict(pathway_file="pathways.csv"):
+    def make_cohort_pathway_dict(pathway_file=os.path.join(DATA_DIR, PATHWAYS_FILE)):
         # Read a file of pathways formatted as explained below
         # Return a dictionary that maps cohort names to Pathway instances
         cohort_pathway_dict = dict()
@@ -58,7 +62,7 @@ class Pathway:
         math_courses_list = []
         for each_key in sorted(self.semester_courses_dict):
             for each_course in self.semester_courses_dict[each_key]:
-                if each_course in math_courses_set:
+                if each_course in MATH_COURSES_SET:
                     math_courses_list.append( (each_course, each_key) )
         return math_courses_list
 

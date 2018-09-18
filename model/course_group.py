@@ -8,7 +8,7 @@ class CourseGroup:
     # course_list holds a list of Course objects
     def __init__(self,
                  course_list=None, term_number=None, semester_number=None,
-                 major=None, major_second=None, level=None,
+                 major=None, major_second=None,
                  term_gpa=None, term_units=None,
                  cumulative_gpa=None, cumulative_units=None,
                  student_id=None):
@@ -17,7 +17,6 @@ class CourseGroup:
         self.semester_number = semester_number  # 0 if semester_number is None else semester_number
         self.major = major
         self.major_second = major_second
-        self.level = level
         self.term_gpa = term_gpa
         self.term_units = term_units
         self.cumulative_gpa = cumulative_gpa

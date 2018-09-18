@@ -2,11 +2,11 @@ from utilities.other_constants import *
 
 
 class Course:
-    def __init__(self, semester, course, grade_number, grade, student_id):
-        self.semester = semester
+    def __init__(self, semester_number, course, grade, grade_letter, student_id):
+        self.semester_number = semester_number
         self.course = course
-        self.grade_number = grade_number
         self.grade = grade
+        self.grade_letter = grade_letter
         self.student_id = student_id
         self.is_math_course = False
         self.is_remediation_math_course = False
@@ -15,10 +15,10 @@ class Course:
 
     def to_dict(self):
         new_dict = {
-            "semester": self.semester,
+            "semester": self.semester_number,
             "course": self.course,
-            "grade_number": self.grade_number,
             "grade": self.grade,
+            "grade_letter": self.grade_letter,
             "is_math_course": self.is_math_course
         }
         return new_dict

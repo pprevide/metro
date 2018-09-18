@@ -19,6 +19,9 @@ SEMESTERS_LIST = [
     "Fall 2017"
 ]
 
+SEMESTERS_TO_NUMBERS_DICT = {x: SEMESTERS_LIST.index(x)+1 for x in SEMESTERS_LIST}
+NUMBERS_TO_SEMESTERS_DICT = {SEMESTERS_LIST.index(x)+1: x for x in SEMESTERS_LIST}
+
 VALID_GRADES = [
     'A', 'A+', 'A-',
     'B', 'B+', 'B-',

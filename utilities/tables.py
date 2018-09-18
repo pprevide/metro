@@ -9,30 +9,45 @@ from other_constants import PERSONAL_INFO_COLUMN_NAMES_LIST
 
 class Csv:
     def __init__(self, csv_file,
-                 has_header_row = True,
-                 provided_headers_list = None,
-                 delimiter = ',',
-                 is_spss = False):
+                 has_header_row=True,
+                 provided_headers_list=None,
+                 delimiter=',',
+                 is_spss=False,
+                 has_duplicate_column_names=False):
         self.csv_file = csv_file
         self.has_header_row = has_header_row
         self.provided_headers_list = provided_headers_list
         self.delimiter = delimiter
+        self.has_duplicate_column_names = has_duplicate_column_names
         self.rows = self.read_csv()
         if is_spss:
-            self.csv_file = self.convert_spss(csv_file)
+            self.csv_file = self.convert_spss(csv_file, csv_file+".csv")
 
     def read_csv(self):
         with open(self.csv_file, 'rU') as file_object:
             reader = csv.reader(file_object, delimiter=self.delimiter)
             if self.has_header_row:
                 header_row = next(reader, None)
-                header_source = header_row
+                if self.has_duplicate_column_names:
+                    header_counts_dict = dict()
+                    new_header_row = []
+                    for each_header in header_row:
+                        try:
+                            header_counts_dict[each_header] += 1
+                        except KeyError:
+                            header_counts_dict[each_header] = 1
+                        frequency = header_counts_dict[each_header]
+                        if frequency==1:
+                            new_header_row.append(each_header)
+                        else:
+                            new_header_row.append(each_header+str(frequency))
+                    header_row = new_header_row
             else:
-                header_row = []
-                header_source = self.provided_headers_list
+                header_row = self.provided_headers_list
             rows = [
-                { header: value for header, value in zip(header_source, next_row)}
-                for next_row in reader ]
+                { header: value for header, value in zip(header_row, next_row)}
+                for next_row in reader
+                ]
         return header_row, rows
 
     @staticmethod

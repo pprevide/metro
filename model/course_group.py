@@ -1,4 +1,4 @@
-from utilities.constants import *
+from utilities.other_constants import *
 
 
 duplicate_courses_set = set()

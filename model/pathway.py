@@ -1,5 +1,5 @@
 import collections
-from utilities.constants import *
+from utilities.other_constants import *
 from utilities.tables import Csv
 
 

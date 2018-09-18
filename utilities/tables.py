@@ -4,7 +4,7 @@ import pandas as pd
 import os
 import shutil
 
-from constants import PERSONAL_INFO_COLUMN_NAMES_LIST
+from other_constants import PERSONAL_INFO_COLUMN_NAMES_LIST
 
 
 class Csv:

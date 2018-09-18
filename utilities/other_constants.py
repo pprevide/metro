@@ -2,6 +2,8 @@ import csv
 import subprocess
 from helpers import *
 
+
+
 MATH_COURSES_SET = {"MATH124", "ISED160", "PSY171", "MATH110", "MATH199", "MATH226"}
 MATH_REMEDIATION_COURSES_SET = {"MATH60", "MATH70"}
 

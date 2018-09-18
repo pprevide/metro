@@ -1,4 +1,4 @@
-from constants import *
+from other_constants import *
 import collections
 
 # convenience function to convert a semester code like "F2010" to its corresponding academic year

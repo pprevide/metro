@@ -1,4 +1,5 @@
 from other_constants import *
+import sys
 import collections
 
 # convenience function to convert a semester code like "F2010" to its corresponding academic year
@@ -14,6 +15,23 @@ def convert_term_code_to_academic_year(term_code, as_string=False):
             return str(year) + '-' + str(year + 1)
         else:
             return str(year - 1) + '-' + str(year)
+
+def parse_term_from_filename(filename):
+    if filename[0] == 'F':
+        return "Fall " + filename[1:5]
+    else:
+        if filename[0] == 'W':
+            return "Winter " + filename[2:6]
+        else:
+            if filename[0] == 'S' and filename[1] == '2':
+                return "Spring " + filename[1:5]
+            else:
+                if filename[0] == 'S' and filename[1] == 'U':
+                    return "Summer " + filename[2:6]
+                else:
+                    print "ERROR: invalid filename prefix: ", filename
+                    sys.exit(1)
+
 
 # convenience function to convert a semester ("Fall 2011") into its corresponding academic year ("2011")
 def convert_semester_name_to_academic_year(semester_name):
@@ -32,7 +50,7 @@ def create_numbers_semesters_dicts():
 
 # convenience function to convert a semester number (9) to its corresponding academic year (2011)
 def convert_semester_number_to_academic_year(semester_number):
-    return convert_semester_name_to_academic_year(numbers_to_semesters_dict[semester_number])
+    return convert_semester_name_to_academic_year(NUMBERS_TO_SEMESTERS_DICT[semester_number])
 
 # Convenience function to print out the percentages of each item in a list
 def show_counter_percentages(input_list, digits=3):
@@ -42,7 +60,7 @@ def show_counter_percentages(input_list, digits=3):
 
 # Convenience function to convert a semester name ("Fall 2011") into its corresponding semester number (8)
 def convert_semester_name_to_semester_number(semester_name):
-    return semesters_to_numbers_dict[semester_name]
+    return SEMESTERS_TO_NUMBERS_DICT[semester_name]
 
 
 

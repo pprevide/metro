@@ -11,9 +11,12 @@ def create_spmf_input_file(contacts_df, student_records_dict, roster_dict,
                            cohort_years, passing_only, seasons,
                            spmf_input_file_name, capture_gaps=False):
     spmf_input_file = os.path.join(SPMF_DIR, spmf_input_file_name)
+    labels_input_file = spmf_input_file.replace(".txt", "_labels.txt")
     if os.path.exists(spmf_input_file):
         os.remove(spmf_input_file)
-    with open(spmf_input_file, 'a') as output_file:
+    if os.path.exists(labels_input_file):
+        os.remove(labels_input_file)
+    with open(spmf_input_file, 'a') as output_file, open(labels_input_file, 'a') as labels_file:
         # Filter out students who don't satisfy the cohort_years argument
         students = contacts_df.loc[contacts_df["cohort_year"].isin(cohort_years), "student_id"].values
         print "len of students: ", len(students)
@@ -44,8 +47,8 @@ def create_spmf_input_file(contacts_df, student_records_dict, roster_dict,
                 if sequence_string=="":
                     continue
                 sequence_string += "-2"
-            output_file.write(sequence_string)
-            output_file.write('\n')
+            output_file.write(sequence_string + '\n')
+            labels_file.write(student_id + '\n')
 
 def run_spmf(input_file_name, output_file_name, min_support, algorithm_name = "CM-SPADE", *args):
     command = ["java", "-jar", os.path.join(BIN_DIR, SPMF_EXECUTABLE), "run", algorithm_name,
@@ -63,5 +66,5 @@ if __name__=='__main__':
                            cohort_years=[2014, 2015, 2016],
                            passing_only=True,
                            seasons = ["Fall", "Spring", "Summer"],
-                           spmf_input_file_name="practicespmffile.txt",
-                           capture_gaps=True)
+                           spmf_input_file_name="spmfoutput_passing_nogaps_2014_16.txt",
+                           capture_gaps=False)

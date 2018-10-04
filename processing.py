@@ -166,12 +166,11 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016 = Tr
     # Incorporate term-by-term enrollment data in a dict
     query_files = sorted(os.listdir(os.path.join(DATA_DIR, QUERY_DATA_DIR)))
     total_rows_read = 0
-    for each_file in query_files:
+    for idx, each_file in enumerate(query_files):
         header_row, rows = Csv(csv_file=os.path.join(os.path.join(DATA_DIR, QUERY_DATA_DIR), each_file),
                                has_duplicate_column_names=True
                                ).read_csv()
-        print "Reading ", each_file, ": ", len(rows)
-        print header_row
+        print "Reading file ", idx+1, " of ", len(query_files), ": ", each_file, ", ", len(rows)
         for idx, row in enumerate(rows):
             total_rows_read+=1
             student_id = row["SF State ID"]

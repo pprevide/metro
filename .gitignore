@@ -3,8 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# data sources
+# Data sources
 data/
+
+# Executables for spmf and any others
+bin/
 
 # development environment tools
 .idea/

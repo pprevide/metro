@@ -22,6 +22,10 @@ SEMESTERS_LIST = [
 SEMESTERS_TO_NUMBERS_DICT = {x: SEMESTERS_LIST.index(x)+1 for x in SEMESTERS_LIST}
 NUMBERS_TO_SEMESTERS_DICT = {SEMESTERS_LIST.index(x)+1: x for x in SEMESTERS_LIST}
 
+SEASON_MODULO = {
+    "Fall": 1, "Winter": 2, "Spring": 3, "Summer": 0
+}
+
 VALID_GRADES = [
     'A', 'A+', 'A-',
     'B', 'B+', 'B-',
@@ -31,6 +35,16 @@ VALID_GRADES = [
     'CR', 'NC', 'RD',
     'RP', 'W', 'WU'
 ]
+PASSING_GRADES = {
+    'A', 'A+', 'A-',
+    'B', 'B+', 'B-',
+    'C', 'C+', 'C-',
+    'D', 'D+', 'CR'
+}
+INCOMPLETE_GRADES = {
+    'W', 'WU', 'NC',
+    'I', 'IC', 'F'
+}
 GRADE_POINT_DICT = {
     "A+": 4.0,
     "A": 4.0,

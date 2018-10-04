@@ -11,7 +11,7 @@ from utilities.other_constants import GRADE_POINT_DICT, GRADE_OUTCOME_DICT, NUMB
     SEMESTERS_TO_NUMBERS_DICT, VALID_GRADES, SEMESTERS_LIST
 
 
-def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, contacts_through_2016 = True):
+def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016 = True):
 
     ##########################################
     ##### Information Specific to Metro ######
@@ -47,16 +47,6 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
     # remove rows of Contacts that are not SFSU Students or SFSU Comparison Students
     contacts_df = contacts_df[contacts_df["category"].isin(CONTACT_STUDENT_TYPES_DICT.values())]
 
-    # Create pools for Metro students, comparison students, and both
-    combined_students_set = set(contacts_df.loc[contacts_df["category"]
-                             .isin(["Metro", "Comp"]), "student_id"]
-                             .values)
-    metro_students_set = set(contacts_df.loc[contacts_df["category"]
-                           .isin(["Metro"]), "student_id"]
-                           .values)
-    comp_students_set = set(contacts_df.loc[contacts_df["category"]
-                             .isin(["Comp"]), "student_id"]
-                             .values)
     # Add the students' cohorts
     cohort_data_file = os.path.join(DATA_DIR, COHORTS_FILE)
     cohorts_df = pd.read_csv(cohort_data_file,
@@ -68,8 +58,21 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
                         .set_index("cohort_id", verify_integrity=True)
                         .to_dict()["cohort_name"],
                         inplace=True)
-    contacts_df['cohort_year'] = contacts_df['cohort'].str[-4:]
+    contacts_df['cohort_year'] = contacts_df['cohort'].str[-4:].astype('int32')
     contacts_df['cohort_name'] = contacts_df['cohort'].str[:-5]
+    contacts_df = contacts_df[~contacts_df['cohort_year'].isin([2017])]
+
+    # Create pools for Metro students, comparison students, and both
+    combined_students_set = set(contacts_df.loc[contacts_df["category"]
+                             .isin(["Metro", "Comp"]), "student_id"]
+                             .values)
+    metro_students_set = set(contacts_df.loc[contacts_df["category"]
+                           .isin(["Metro"]), "student_id"]
+                           .values)
+    comp_students_set = set(contacts_df.loc[contacts_df["category"]
+                             .isin(["Comp"]), "student_id"]
+                             .values)
+
 
 
     #################################
@@ -80,12 +83,6 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
     cohort_pathway_dict = pathway.Pathway.make_cohort_pathway_dict()
     contacts_df['Pathway'] = contacts_df['cohort'].map(cohort_pathway_dict)
 
-    # print contacts_df['Pathway'].head(1).item().name ########## syntax for accessing one item
-
-
-
-
-
     # Read the EnrollmentOpportunity csv
     enrollments_data_file = os.path.join(DATA_DIR, ENROLLMENTS_FILE)
     enrollments_df = pd.read_csv(enrollments_data_file,
@@ -93,6 +90,23 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
                                  usecols=ENROLLMENT_COLUMNS_DICT.keys())
     enrollments_df.rename(columns=ENROLLMENT_COLUMNS_DICT, inplace=True)
     enrollments_df.set_index("enrollment_id", verify_integrity=True, inplace=True)
+    graduates_df = enrollments_df.drop_duplicates(subset=["student_id", "stage"], keep="first")[['student_id', "stage"]]
+    graduates_df["student_id"].replace(contacts_df
+                           .set_index("contact_id", verify_integrity=True)
+                           .to_dict()['student_id'],
+                            inplace=True)
+    grouped = graduates_df.groupby("student_id")
+    def get_result(df):
+        stages_set = set(df["stage"].values)
+        if 'Graduated' in stages_set:
+            return 'Graduated'
+        else:
+            if 'Left Institution' in stages_set:
+                return "Left"
+            else:
+                return "Open"
+    aggregated = grouped.apply(get_result)
+    contacts_df['result'] = contacts_df['student_id'].map(aggregated.to_dict())
 
     ##########################################
     #####   Information for all FTFTF   ######
@@ -130,10 +144,6 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
     ir_df.set_index(keys="student_id", inplace=True, verify_integrity=True, drop=False)
     if len(ir_df.index.get_duplicates())>0:
         raise ValueError("The IR dataframe has duplicated indexes before merging with contacts.")
-
-
-
-
     # Now combine the attributes data contained in ir_df into contacts_df
     contacts_df.set_index(keys='student_id', inplace=True, verify_integrity=True, drop=False)
     contacts_df = contacts_df.combine_first(ir_df)
@@ -143,7 +153,6 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
     ##### Enrollment Processing #####
     #################################
 
-    metro_only=True
     semesters_to_numbers_dict = dict()  # maps semester names ("Fall 2009") to semester numbers (1)
     numbers_to_semesters_dict = dict()  # maps semester numbers (1) to semester names ("Fall 2009")
 
@@ -168,7 +177,6 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
             student_id = row["SF State ID"]
             status = row["Status"]
             grade_letter = row["Grade"]
-            graduated = row["Status2"]
             # Skip this row of the csv file if conditions warrant
             if status != "Enrolled" or grade_letter not in VALID_GRADES: continue
             if metro_only and student_id not in metro_students_set : continue
@@ -178,8 +186,9 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
             #admit_term = row["Admit Term"]
             semester = SEMESTERS_TO_NUMBERS_DICT[parse_term_from_filename(each_file)]
             semester_number = semester
+            course_name = row["Class"].replace(" ", "")
             this_course_object = course.Course(semester_number=semester_number,
-                                               course=course,
+                                               course=course_name,
                                                grade=grade,
                                                grade_letter=grade_letter,
                                                student_id=student_id)
@@ -209,24 +218,20 @@ def preprocessing(metro_only=False, metro_comp=False, attributes_only=False, con
                 term_CourseGroup_dict[semester_number] = new_CourseGroup
                 student_record_dict[student_id] = term_CourseGroup_dict
 
+    roster_dict = {"metro": metro_students_set,
+                   "comp": comp_students_set,
+                   "combined": combined_students_set}
 
-    for each in student_record_dict:
-        this_dict = student_record_dict[each]
-        if len(this_dict)<5: continue
-        print "keys: ", this_dict.keys()
-        print "whole thing: "
-        print this_dict
-        break
+    if metro_only:
+        contacts_df = contacts_df[contacts_df["category"]=="Metro"]
+    else:
+        if metro_comp:
+            contacts_df = contacts_df[contacts_df["category"].isin(["Metro", "Comp"])]
     print "total rows read: ", total_rows_read
 
-    return contacts_df, student_record_dict
-
-
-
-
+    return contacts_df, student_record_dict, roster_dict
 
 
 if __name__ == '__main__':
-    contacts_df, student_record_dict = preprocessing(metro_comp=True)
-    print contacts_df.shape
-    print contacts_df.head(4)
+    contacts_df, student_record_dict, roster_dict = preprocessing(metro_comp=True)
+

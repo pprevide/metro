@@ -20,11 +20,14 @@ CONTACT_COLUMNS_DICT = {
     "Education_level_mother_or_guardian1_IR__c": "mother_edu",
     "Education_level_father_or_guardian2_IR__c": "father_edu",
     "Current_Metro_Enrollment__c": "current_metro_enrollment",
-    "Current_Institution_Enrollment__c": "current_institutional_enrollment"
+    "Current_Institution_Enrollment__c": "current_institutional_enrollment",
+    "Id": "contact_id"
 }
 CONTACT_DTYPE_CONVERSIONS_DICT = {
     "SFSU_student_ID__c" : str,
-    "UD_Student_ID__c": str
+    "UD_Student_ID__c": str,
+    "mother_edu": int,
+    "father_edu": int
 }
 
 CONTACT_STUDENT_TYPES_DICT = {
@@ -46,9 +49,10 @@ ENROLLMENTS_FILE = "EnrollmentOpportunity__c.csv"
 ENROLLMENT_COLUMNS_DICT = {
     "Id": "enrollment_id",
     "MetroPersistence__c": "metro_persistence",
-    "Stage__c": "stage"
+    "Stage__c": "stage",
+    "Contact__c": "student_id",
+    "TermNumber__c": "term_number"
 }
-
 
 IR_DATA_DICT = {
     "cohort_sid": "student_id",
@@ -83,4 +87,6 @@ IR_PARENT_EDUC_DTYPE_CONVERSIONS_DICT = {
 }
 
 PATHWAYS_FILE = "Pathways.csv"
-QUERY_DATA_DIR = "query_data_grad"
+QUERY_DATA_DIR = "query_data"
+
+SPMF_DIR = ""

@@ -4,6 +4,7 @@ from utilities.other_constants import *
 duplicate_courses_set = set()
 students_with_duplicate_courses_set = set()
 
+
 class CourseGroup:
     # course_list holds a list of Course objects
     def __init__(self,
@@ -23,6 +24,7 @@ class CourseGroup:
         self.cumulative_units = cumulative_units
         self.student_id = student_id
         self.course_names_set = set()
+        self.passing_course_names_set = set()
 
     def get_numbered_course_group(self):
         course_string = "[" + str(self.semester_number) + ": {"
@@ -39,6 +41,8 @@ class CourseGroup:
         if new_course.course not in self.course_names_set:
             self.course_list.append(new_course)
             self.course_names_set.add(new_course.course)
+            if new_course.grade_letter in PASSING_GRADES:
+                self.passing_course_names_set.add(new_course.course)
         else:
             new_grade = new_course.grade
             old_grade = None
@@ -77,11 +81,15 @@ class CourseGroup:
             st += nextst
         return st
 
-    def to_spmf_string(self):
+    def to_spmf_string(self, passing_only=False):
         stlist = []
         st = ""
         for each_course_object in self.course_list:
-            stlist.append(each_course_object.course)
+            if passing_only:
+                if each_course_object.grade_letter in PASSING_GRADES:
+                    stlist.append(each_course_object.course)
+            else:
+                stlist.append(each_course_object.course)
         for idx, each_course in enumerate(sorted(stlist)):
             nextst = each_course
             nextst += " "

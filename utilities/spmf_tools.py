@@ -1,9 +1,11 @@
 import os
 import sys
-from configuration import SPMF_DIR
+from configuration import SPMF_DIR, BIN_DIR
 from other_constants import SEASON_MODULO
+from file_constants import SPMF_EXECUTABLE
 from processing import preprocessing
 import pandas as pd
+import subprocess
 
 def create_spmf_input_file(contacts_df, student_records_dict, roster_dict,
                            cohort_years, passing_only, seasons,
@@ -45,10 +47,16 @@ def create_spmf_input_file(contacts_df, student_records_dict, roster_dict,
             output_file.write(sequence_string)
             output_file.write('\n')
 
+def run_spmf(input_file_name, output_file_name, min_support, algorithm_name = "CM-SPADE", *args):
+    command = ["java", "-jar", os.path.join(BIN_DIR, SPMF_EXECUTABLE), "run", algorithm_name,
+               os.path.join(SPMF_DIR, input_file_name), os.path.join(SPMF_DIR, output_file_name),
+               str(min_support)]
+    command.extend(args)
+    subprocess.Popen(command)
+
 
 if __name__=='__main__':
     contacts_df, student_records_dict, roster_dict = preprocessing(metro_only=True)
-    print "Got here"
     create_spmf_input_file(contacts_df=contacts_df,
                            student_records_dict=student_records_dict,
                            roster_dict=roster_dict,

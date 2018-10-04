@@ -89,4 +89,4 @@ IR_PARENT_EDUC_DTYPE_CONVERSIONS_DICT = {
 PATHWAYS_FILE = "Pathways.csv"
 QUERY_DATA_DIR = "query_data"
 
-SPMF_DIR = ""
+SPMF_EXECUTABLE = "spmf.jar"

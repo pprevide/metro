@@ -42,8 +42,7 @@ PASSING_GRADES = {
     'D', 'D+', 'CR'
 }
 INCOMPLETE_GRADES = {
-    'W', 'WU', 'NC',
-    'I', 'IC', 'F'
+    'W', 'WU', 'I', 'IC'
 }
 GRADE_POINT_DICT = {
     "A+": 4.0,
@@ -95,4 +94,28 @@ GRADE_OUTCOME_DICT = {
 VALID_LEVELS_SET = {"Freshman", "Sophomore", "Junior", "Senior"}
 
 PERSONAL_INFO_COLUMN_NAMES_LIST = {"First Name", "Last Name", "Address", "Phone Number"}
+
+RACE_RENAMING_DICT = {
+    "Hispanic/Latino (any race)": "Hispanic/Latino",
+    "Asian Only (Asian) - Non-Hispanic": "Asian",
+    "Black or African American Only (Black) - Non-Hispanic": "Black",
+    "White Only (White) - Non-Hispanic": "White"
+}
+
+INCOME_CATEGORIES_DICT = {
+    "Less than or equal to $30,000": 0,
+    "$30,001 - $50,000": 1,
+    "50,001 - $70,000": 2,
+    "$70,001 or higher": 3
+    }
+
+EDUCATION_CATEGORIES_DICT = {
+    "No High School": 0,
+    "Some High School": 1,
+    "High School Grad": 2,
+    "Some College": 3,
+    "2-Yr College Grad": 4,
+    "4-Yr College Grad": 5,
+    "Postgraduate": 6
+}
 

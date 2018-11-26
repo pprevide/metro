@@ -9,6 +9,9 @@ data/
 # Executables for spmf and any others
 bin/
 
+# Script output files
+output/
+
 # development environment tools
 .idea/
 

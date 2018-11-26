@@ -8,10 +8,12 @@ from utilities.helpers import parse_term_from_filename
 from utilities.tables import Csv
 from utilities.file_constants import *
 from utilities.other_constants import GRADE_POINT_DICT, GRADE_OUTCOME_DICT, NUMBERS_TO_SEMESTERS_DICT, \
-    SEMESTERS_TO_NUMBERS_DICT, VALID_GRADES, SEMESTERS_LIST
+    SEMESTERS_TO_NUMBERS_DICT, VALID_GRADES, SEMESTERS_LIST, RACE_RENAMING_DICT, INCOME_CATEGORIES_DICT,\
+    INCOMPLETE_GRADES
 
 
-def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016 = True):
+def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True,
+                  attributes_only=False):
 
     ##########################################
     ##### Information Specific to Metro ######
@@ -83,12 +85,34 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016 = Tr
     cohort_pathway_dict = pathway.Pathway.make_cohort_pathway_dict()
     contacts_df['Pathway'] = contacts_df['cohort'].map(cohort_pathway_dict)
 
+    # Read the Terms csv so that EnrollmentOpportunity terms can be determined
+    terms_data_file = os.path.join(DATA_DIR, TERMS_FILE)
+    terms_df = pd.read_csv(terms_data_file,
+                           low_memory=False,
+                           usecols=TERM_COLUMNS_DICT.keys())
+    terms_df.rename(columns=TERM_COLUMNS_DICT, inplace=True)
+    # remove unneeded term objects
+    terms_df = terms_df[(terms_df["term_name"].str.contains("SFSU")) \
+        & (~terms_df["term_name"].str.contains("COMP"))]
+    # remove leading unwanted characters in the term names
+    terms_df["term_name"] = terms_df["term_name"].map(lambda x : x[5:])
+    terms_df.set_index("term_id", verify_integrity=True, inplace=True)
+
+
     # Read the EnrollmentOpportunity csv
     enrollments_data_file = os.path.join(DATA_DIR, ENROLLMENTS_FILE)
     enrollments_df = pd.read_csv(enrollments_data_file,
                                  low_memory=False,
                                  usecols=ENROLLMENT_COLUMNS_DICT.keys())
     enrollments_df.rename(columns=ENROLLMENT_COLUMNS_DICT, inplace=True)
+    # replace the Term ID with the term number from the Terms csv
+    contacts_df.replace(cohorts_df
+                        .set_index("cohort_id", verify_integrity=True)
+                        .to_dict()["cohort_name"],
+                        inplace=True)
+    enrollments_df.replace(terms_df.to_dict()["term_name"], inplace=True)
+    #print enrollments_df.head(50)
+    #sys.exit()
     enrollments_df.set_index("enrollment_id", verify_integrity=True, inplace=True)
     graduates_df = enrollments_df.drop_duplicates(subset=["student_id", "stage"], keep="first")[['student_id', "stage"]]
     graduates_df["student_id"].replace(contacts_df
@@ -148,6 +172,23 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016 = Tr
     contacts_df.set_index(keys='student_id', inplace=True, verify_integrity=True, drop=False)
     contacts_df = contacts_df.combine_first(ir_df)
 
+    # Transform race and household-income values into more readable labels
+    contacts_df["race"].replace(RACE_RENAMING_DICT, inplace=True)
+    contacts_df.loc[~contacts_df["race"].isin(RACE_RENAMING_DICT.values()), "race"] = "Other"
+    contacts_df["household_income"].replace(INCOME_CATEGORIES_DICT, inplace=True)
+    contacts_df.loc[~contacts_df["household_income"].isin(INCOME_CATEGORIES_DICT.values()),
+                    "household_income"] = np.nan
+
+    if attributes_only:
+        if metro_only:
+            contacts_df = contacts_df[contacts_df["category"] == "Metro"]
+        else:
+            if metro_comp:
+                contacts_df = contacts_df[contacts_df["category"].isin(["Metro", "Comp"])]
+        roster_dict = {"metro": metro_students_set,
+                       "comp": comp_students_set,
+                       "combined": combined_students_set}
+        return contacts_df, None, roster_dict
 
     #################################
     ##### Enrollment Processing #####
@@ -170,7 +211,7 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016 = Tr
         header_row, rows = Csv(csv_file=os.path.join(os.path.join(DATA_DIR, QUERY_DATA_DIR), each_file),
                                has_duplicate_column_names=True
                                ).read_csv()
-        print "Reading file ", idx+1, " of ", len(query_files), ": ", each_file, ", ", len(rows)
+        print "Reading file", idx+1, "of", len(query_files), "...", each_file, "# rows:", len(rows)
         for idx, row in enumerate(rows):
             total_rows_read+=1
             student_id = row["SF State ID"]
@@ -216,6 +257,66 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016 = Tr
                 new_CourseGroup.add_Course(this_course_object)
                 term_CourseGroup_dict[semester_number] = new_CourseGroup
                 student_record_dict[student_id] = term_CourseGroup_dict
+
+    # need the student_records_dict to be limited only to its comp students
+    comp_students_full_set = set(contacts_df["student_id"].values).intersection(student_record_dict)
+    contacts_df = contacts_df[contacts_df["student_id"].isin(comp_students_full_set)]
+
+    # Use this student_records_dict to compute
+    #     (1) core-pathway progress (0 for Comp students) and
+    #     (2) 4th-term completion
+    # Add these fields to each student record
+
+    progress_df = pd.DataFrame(columns=["student_id", "core_progress"])
+    fourth_term_completion_df = pd.DataFrame(columns=["student_id", "fourth_completion"])
+    for idx, student_id in enumerate(student_record_dict):
+        this_student_records_dict = student_record_dict[student_id]
+        cohort_year = str(int(contacts_df.loc[contacts_df["student_id"] == student_id, "cohort_year"].item()))
+        first_term_numeric = SEMESTERS_TO_NUMBERS_DICT["Fall "+cohort_year]
+        first_4_terms_set = set(range(first_term_numeric, first_term_numeric+7, 2))
+        if first_term_numeric+6 not in this_student_records_dict.keys()\
+                or len(first_4_terms_set.intersection(this_student_records_dict.keys()))<3:
+            fourth_completion = False
+        else:
+            try:
+                fourthcoursegroup = this_student_records_dict[first_term_numeric+6]
+                incomplete = True
+                courses = []
+                for this_course in fourthcoursegroup.course_list:
+                    courses.append( (this_course.course, this_course.grade_letter))
+                    if this_course.grade_letter not in INCOMPLETE_GRADES:
+                        incomplete = False
+                        fourth_completion = True
+                        break
+                if incomplete:
+                    fourth_completion = False
+            except KeyError:
+                fourth_completion = False
+        fourth_term_completion_df = fourth_term_completion_df\
+            .append(pd.DataFrame({"student_id":[student_id],
+                                  "fourth_completion": [fourth_completion]}),
+                    ignore_index=True)
+        # Now populate the progress data frame
+        # Metro students have a Pathway - compute how many courses from it were taken
+        # Comp students do not have a Pathway: core progress is 0
+        try:
+            pathway_obj = contacts_df.loc[contacts_df["student_id"] == student_id, "Pathway"].item()
+            core_courses_list = pathway_obj.get_core_sequence_list()
+            this_student_courses_set = set()
+            for each_CourseGroup in this_student_records_dict.values():
+                this_student_courses_set.update(each_CourseGroup.passing_course_names_set)
+            this_student_progress = len(list(set(core_courses_list).intersection(this_student_courses_set)))
+        except AttributeError:
+            this_student_progress = 0
+        progress_df = progress_df.append(
+            pd.DataFrame(
+                {"student_id": [student_id], "core_progress": [this_student_progress]}
+            ), ignore_index=True)
+    progress_df["core_progress"] = progress_df["core_progress"].astype('int8')
+    contacts_df = contacts_df.merge(progress_df, how="outer", on="student_id") \
+        .merge(fourth_term_completion_df, how = "outer", on="student_id")
+
+    # Prepare the data structures to be returned to the caller
 
     roster_dict = {"metro": metro_students_set,
                    "comp": comp_students_set,

@@ -1,3 +1,15 @@
+"""Collect and organize data from all sources.
+
+This module pulls together all the student data, performs transformations
+and some feature engineering, and populates certain data structures.  These
+structures are made available to other modules and can be used for
+analysis of student performance and demographics data.
+
+Functions exported by this module include:
+    preprocessing(): collect, transform, and return structures for student data
+
+"""
+
 import os, sys
 import pandas as pd
 import numpy as np
@@ -14,6 +26,38 @@ from utilities.other_constants import GRADE_POINT_DICT, GRADE_OUTCOME_DICT, NUMB
 
 def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True,
                   attributes_only=False):
+    """Collect, transform, feature-engineer, and return student data for analysis by callers.
+
+    The student data exists as a collection of csv files, which are stored in the /data directory.
+    This function reads those files and processes the data.
+    These csv files are exported from different sources:
+        1. The Salesforce org for the Metro program: these files are created using Salesforce's Data
+            Export feature.  Each table corresponds to one of the Salesforce record types.
+        2. The SFSU Campus Solutions (CS) querying system: these files represent the output of a particular
+            query for a particular term.
+        3. The SFSU Institutional Research (IR) department has made some student demographic data available
+            that is not otherwise available from Salesforce or from CS queries.
+    Students fall into three exclusive groups: Metro students; Comparison students, and
+        everyone else.  Some data studies will be concerned with only Metro students, while others
+        may want to compare Metro and Comparison student outcomes or properties.  The parameters listed
+        below enable these different types of studies.
+
+    :param metro_only: Consider and return information for Metro students only.
+    :param metro_comp: Consider and return for Metro and Comparison students only.
+    :param contacts_through_2016: If true, only students in 2009-2016 cohort years are considered.
+    :param attributes_only: If true, consider and return only the demographic and personal attributes of
+        students.  If false, the semester-by-semester academic performance of the students is also
+        collected, engineered, and returned.
+    :return: The tuple (contacts_df, student_record_dict, roster_dict).
+        contacts_df is a pandas dataframe containing student demographic and personal attributes.
+        student_record_dict is a Python dictionary whose keys are student id's and whose values are
+            Python dictionaries, which in turn map semester numbers (i.e., Fall 2009 is 1, Winter 2009
+                is 2, etc.) to CourseGroup objects (see the model/course_group.py file).
+                If attributes_only, the student_record_dict is None.
+        roster_dict is a Python dictionary that maps the strings "metro", "comp", and "combined" to
+            Python sets containing the student id's for Metro, Comparison and Metro plus Comparison students
+            respectively.
+    """
 
     ##########################################
     ##### Information Specific to Metro ######
@@ -75,11 +119,12 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
                              .isin(["Comp"]), "student_id"]
                              .values)
 
-
-
     #################################
     #####  Pathways Processing  #####
     #################################
+    # Each Metro student is assigned to a cohort, which in turn follows a specific pathway, or sequence,
+    #   of 3 foundational Metro courses.  See the model/pathway.py file for more information.
+
     # Read pathway information associated with each Metro cohort
     #   Return a dictionary that maps cohort names to Pathway objects
     cohort_pathway_dict = pathway.Pathway.make_cohort_pathway_dict()
@@ -111,8 +156,6 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
                         .to_dict()["cohort_name"],
                         inplace=True)
     enrollments_df.replace(terms_df.to_dict()["term_name"], inplace=True)
-    #print enrollments_df.head(50)
-    #sys.exit()
     enrollments_df.set_index("enrollment_id", verify_integrity=True, inplace=True)
     graduates_df = enrollments_df.drop_duplicates(subset=["student_id", "stage"], keep="first")[['student_id', "stage"]]
     graduates_df["student_id"].replace(contacts_df

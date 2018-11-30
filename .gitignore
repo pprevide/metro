@@ -1,3 +1,7 @@
+# This .gitignore file lists the files and directories that will be left untracked by git.
+# These entries will not appear in the "Untracked files" section of the "git status" output.
+# Student data should remain untracked so that it will not become part of the Github remote repository.
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

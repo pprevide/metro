@@ -1,8 +1,17 @@
+"""Define constants relating to file names and mappings of column headers to more readable names.
+
+This file defines constants for the various data sources from the /data directory.
+The dictionaries defined here provide a mapping from the unwieldy column headers in the csv files
+exported from Salesforce or SFSU's Campus Solutions system, to more readable column names.
+
+As new data files are added and read by the preprocessing.py function, the column headers and
+mappings should be added to this file.
+"""
+
 CONTACTS_FILE = "Contact.csv"
 CONTACTS_2016_FILE = "Contact_2016.csv"
-# Dictionary of Contacts.csv column names and their new, more convenient names
 CONTACT_COLUMNS_DICT = {
-    "SFSU_student_ID__c" : "student_id",
+    "SFSU_student_ID__c": "student_id",
     "CurrentCohort__c": "cohort",
     "Race_or_ethnicity_iped_ir__c": "race",
     "AccountId": "category",
@@ -32,12 +41,11 @@ CONTACT_COLUMNS_DICT = {
     "EOP_Status__c": "EOP"
 }
 CONTACT_DTYPE_CONVERSIONS_DICT = {
-    "SFSU_student_ID__c" : str,
+    "SFSU_student_ID__c": str,
     "UD_Student_ID__c": str,
     "mother_edu": int,
     "father_edu": int
 }
-
 CONTACT_STUDENT_TYPES_DICT = {
     "SFSU Students": "Metro",
     "SFSU Comparison Students": "Comp"
@@ -52,15 +60,12 @@ COHORT_COLUMNS_DICT = {
     "Id": "cohort_id",
     "Name": "cohort_name"
 }
-
-
 TERMS_FILE = "Term__c.csv"
 TERM_COLUMNS_DICT = {
     "Id": "term_id",
     "Name": "term_name",
     "TermCode__c": "term_code"
 }
-
 ENROLLMENTS_FILE = "EnrollmentOpportunity__c.csv"
 ENROLLMENT_COLUMNS_DICT = {
     "Id": "enrollment_id",
@@ -73,9 +78,7 @@ ENROLLMENT_COLUMNS_DICT = {
     "GPA__c": "gpa",
     "CumulativeGPA__c": "gpa_total",
     "SFSU_Campus_UE__c": "units_total"
-
 }
-
 IR_DATA_DICT = {
     "cohort_sid": "student_id",
     "cohort_year_term": "cohort_year_term",
@@ -93,7 +96,6 @@ IR_DATA_DICT = {
     "deg_cnt": "graduated",
     "deg_year_term": "graduation_term"
 }
-
 IR_PARENT_EDUC_FILE = "parent_educ.csv"
 IR_PARENT_EDUC_DICT = {
     "student_id": "student_id",
@@ -107,21 +109,18 @@ IR_PARENT_EDUC_DTYPE_CONVERSIONS_DICT = {
     "mother_edu": str,
     "father_edu": str
 }
-
 PATHWAYS_FILE = "Pathways.csv"
 QUERY_DATA_DIR = "query_data"
-
 SPMF_EXECUTABLE = "spmf.jar"
-
-RSTCMP2_COLUMNS_DICT = \
-    {"Term": "Term",
-     "ID": "Id",
-     "Grd Points": "grade_points",
-     "Admit Term": "admit_term_rstcmp",
-     "Current Total Units Taken": "current_units",
-     "Units Passed Toward GPA": "units_passed",
-     "Current GPA": "current_gpa",
-     "Cumulative GPA": "cum_gpa",
-     "Campus UE": "campus_ue",
-     "Transfer UE": "transfer_ue"
-     }
+RSTCMP2_COLUMNS_DICT = {
+    "Term": "Term",
+    "ID": "Id",
+    "Grd Points": "grade_points",
+    "Admit Term": "admit_term_rstcmp",
+    "Current Total Units Taken": "current_units",
+    "Units Passed Toward GPA": "units_passed",
+    "Current GPA": "current_gpa",
+    "Cumulative GPA": "cum_gpa",
+    "Campus UE": "campus_ue",
+    "Transfer UE": "transfer_ue"
+}

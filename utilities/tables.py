@@ -1,3 +1,14 @@
+"""Provide services and a wrapper class for manipulating data tables and csv files.
+
+This module defines a Csv class that expands of the services provided by Python's csv library.
+
+In most cases, the Pandas library provides a cleaner alternative to the services of this module.
+For example, the processing.py module uses Pandas to read, transform, combine, and feature-engineer
+various csv files more efficiently and more readably than this file.
+
+However, if it is desired to use native Python to read through files for any reaosn, this module can
+offer (or be expanded to offer) useful services.
+"""
 import csv
 import subprocess
 import pandas as pd
@@ -8,6 +19,13 @@ from other_constants import PERSONAL_INFO_COLUMN_NAMES_LIST
 
 
 class Csv:
+    """Wrapper class for reading, writing, and manipulating csv files.
+
+    Public functions of this class include:
+        read_csv: A modified version of Python's csv file reading functionality
+        convert_spss: Calls an R script for converting an spss file into a separated-values (e.g, csv) file
+        remove_columns: Convenience function for removing named columns
+    """
     def __init__(self, csv_file,
                  has_header_row=True,
                  provided_headers_list=None,
@@ -24,6 +42,13 @@ class Csv:
             self.csv_file = self.convert_spss(csv_file, csv_file+".csv")
 
     def read_csv(self):
+        """Read a csv file and return its column headers and data.
+
+        :return: A tuple consisting of:
+            (1) a list containing column headers, and
+            (2) a list of dictionaries, wherein each dictionary maps a header to the value contained in that column
+                 on a row-by-row basis.
+        """
         with open(self.csv_file, 'rU') as file_object:
             reader = csv.reader(file_object, delimiter=self.delimiter)
             if self.has_header_row:
@@ -52,6 +77,16 @@ class Csv:
 
     @staticmethod
     def convert_spss(spss_file_path, output_file_path, separator="\t"):
+        """Convert an spss file to a separated-values file (e.g., tsv, csv).
+
+        Note that the default separator is a tab rather than a comma, since in the spss files that this
+        function has been used on, the columns of data frequently contain commas.
+
+        :param spss_file_path: Path to the spss file.
+        :param output_file_path: Path to the output file.
+        :param separator: Desired separator (with a tab as default).
+        :return: Path to the output file if conversion was successful.
+        """
         conversion_script = "spss_to_table.R"
         cmd = ['Rscript', conversion_script] + [spss_file_path, output_file_path, separator]
         x = subprocess.check_output(cmd, universal_newlines= True)
@@ -61,6 +96,17 @@ class Csv:
 
     @staticmethod
     def remove_columns(path, columns=None, anonymize = True, make_backups = True):
+        """Remove specified columns from a csv/tsv file.
+
+        This function can be used to remove personally-identifying information.  See
+        PERSONAL_INFO_COLUMN_NAMES_LIST in other_constants.py.
+
+        :param path: Path to the file from which columns should be removed.
+        :param columns: List of column headers corresponding to columns to be removed.
+        :param anonymize: If true, remove personally-identifying information.
+        :param make_backups: Back up the file before removing the columns.
+        :return: Path(s) to the files from which the columns have been removed.
+        """
         if columns is None: columns = []
         if anonymize: columns.extend(PERSONAL_INFO_COLUMN_NAMES_LIST)
         files = []

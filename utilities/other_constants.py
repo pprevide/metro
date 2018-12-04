@@ -1,12 +1,14 @@
-import csv
-import subprocess
-from helpers import *
+"""Define constants relating to courses, semester identifiers, grades, and other non-file topics.
 
+This file defines constants associated with pre-defined collections of information, such as grades,
+courses, semester identifiers, and so on.
 
+Constants relating to csv file headers and filenames are defined in other_constants.py.  All other
+constants should be defined in this file.
+"""
 
 MATH_COURSES_SET = {"MATH124", "ISED160", "PSY171", "MATH110", "MATH199", "MATH226"}
 MATH_REMEDIATION_COURSES_SET = {"MATH60", "MATH70"}
-
 SEMESTERS_LIST = [
     "Fall 2009", "Winter 2010", "Spring 2010", "Summer 2010",
     "Fall 2010", "Winter 2011", "Spring 2011", "Summer 2011",
@@ -19,13 +21,11 @@ SEMESTERS_LIST = [
     "Fall 2017"
 ]
 
-SEMESTERS_TO_NUMBERS_DICT = {x: SEMESTERS_LIST.index(x)+1 for x in SEMESTERS_LIST}
-NUMBERS_TO_SEMESTERS_DICT = {SEMESTERS_LIST.index(x)+1: x for x in SEMESTERS_LIST}
-
+SEMESTERS_TO_NUMBERS_DICT = {x: SEMESTERS_LIST.index(x) + 1 for x in SEMESTERS_LIST}
+NUMBERS_TO_SEMESTERS_DICT = {SEMESTERS_LIST.index(x) + 1: x for x in SEMESTERS_LIST}
 SEASON_MODULO = {
     "Fall": 1, "Winter": 2, "Spring": 3, "Summer": 0
 }
-
 VALID_GRADES = [
     'A', 'A+', 'A-',
     'B', 'B+', 'B-',
@@ -90,25 +90,20 @@ GRADE_OUTCOME_DICT = {
     "RD": None,
     "RP": None
 }
-
 VALID_LEVELS_SET = {"Freshman", "Sophomore", "Junior", "Senior"}
-
 PERSONAL_INFO_COLUMN_NAMES_LIST = {"First Name", "Last Name", "Address", "Phone Number"}
-
 RACE_RENAMING_DICT = {
     "Hispanic/Latino (any race)": "Hispanic/Latino",
     "Asian Only (Asian) - Non-Hispanic": "Asian",
     "Black or African American Only (Black) - Non-Hispanic": "Black",
     "White Only (White) - Non-Hispanic": "White"
 }
-
 INCOME_CATEGORIES_DICT = {
     "Less than or equal to $30,000": 0,
     "$30,001 - $50,000": 1,
     "50,001 - $70,000": 2,
     "$70,001 or higher": 3
-    }
-
+}
 EDUCATION_CATEGORIES_DICT = {
     "No High School": 0,
     "Some High School": 1,
@@ -118,4 +113,3 @@ EDUCATION_CATEGORIES_DICT = {
     "4-Yr College Grad": 5,
     "Postgraduate": 6
 }
-

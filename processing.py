@@ -42,13 +42,15 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
         may want to compare Metro and Comparison student outcomes or properties.  The parameters listed
         below enable these different types of studies.
 
-    :param metro_only: Consider and return information for Metro students only.
-    :param metro_comp: Consider and return for Metro and Comparison students only.
-    :param contacts_through_2016: If true, only students in 2009-2016 cohort years are considered.
-    :param attributes_only: If true, consider and return only the demographic and personal attributes of
+    Args:
+        metro_only (bool): Consider and return information for Metro students only.
+        metro_comp (bool): Consider and return for Metro and Comparison students only.
+        contacts_through_2016 (bool): If true, only students in 2009-2016 cohort years are considered.
+        attributes_only (bool): If true, consider and return only the demographic and personal attributes of
         students.  If false, the semester-by-semester academic performance of the students is also
         collected, engineered, and returned.
-    :return: The tuple (contacts_df, student_record_dict, roster_dict).
+
+    Returns: The tuple (contacts_df, student_record_dict, roster_dict).
         contacts_df is a pandas dataframe containing student demographic and personal attributes.
         student_record_dict is a Python dictionary whose keys are student id's and whose values are
             Python dictionaries, which in turn map semester numbers (i.e., Fall 2009 is 1, Winter 2009
@@ -57,6 +59,7 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
         roster_dict is a Python dictionary that maps the strings "metro", "comp", and "combined" to
             Python sets containing the student id's for Metro, Comparison and Metro plus Comparison students
             respectively.
+
     """
 
     ##########################################

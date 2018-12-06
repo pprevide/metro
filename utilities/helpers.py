@@ -21,10 +21,14 @@ def convert_term_code_to_academic_year(term_code, as_string=False):
     S2013, this function likewise returns 2012 since the Spring 2013 semester is a part of
     the 2012-2013 academic year.
 
-    :param term_code: A string encoding the semester and year of a particular term.
-    :param as_string: If true, return the academic year as a string (e.g., "2012-2013");
-        if false, return an integer representing the start of the year (e.g., 2012).
-    :return: The year in which the academic year containing term_code started.
+    Args:
+        term_code (str): A string encoding the semester and year of a particular term.
+        as_string (bool): If true, return the academic year as a string (e.g., "2012-2013");
+            If false, return an integer representing the start of the year (e.g., 2012).
+
+    Returns:
+        The year in which the academic year containing term_code started, as a string.
+
     """
     year = int(term_code[-4:])
     if as_string == False:
@@ -51,9 +55,14 @@ def parse_term_from_filename(filename):
     This function converts the start of the filename, such as F2013, into a text representation of the relevant
     semester, such as "Fall 2013".
 
-    :param filename: The name of a csv file containing query results exported from CS.
-    :return: A string representation of the semester and year, such as "Fall 2013".
+    Args:
+        filename (str): The name of a csv file containing query results exported from CS.
+
+    Returns:
+        A string representation of the semester and year, such as "Fall 2013".
+
     """
+
     if filename[0] == 'F':
         return "Fall " + filename[1:5]
     else:
@@ -73,9 +82,14 @@ def parse_term_from_filename(filename):
 def convert_semester_name_to_academic_year(semester_name):
     """Convert a semester name ("Fall 2011") into its corresponding academic year ("2011").
 
-    :param semester_name: Text representation of a particular semester.
-    :return: A string representing the year in which the applicable academic year started.
+    Args:
+        semester_name (str): Text representation of a particular semester.
+
+    Returns:
+        A string representing the year in which the applicable academic year started.
+
     """
+
     return semester_name[-4:] if semester_name[:2] in {"Fa"} \
         else str(int(semester_name[-4:]) - 1)
 
@@ -90,8 +104,11 @@ def create_numbers_semesters_dicts():
     See SEMESTERS_LIST in utilities/other_constants.py for the data structure containing
     the names of all relevant semesters.
 
-    :return: dictionaries mapping semester names to numbers, and vice versa.
+    Returns:
+        Dictionaries mapping semester names to numbers, and vice versa.
+
     """
+
     numbers_to_semesters_dict = dict()
     semesters_to_numbers_dict = dict()
     semester_no = 1
@@ -103,22 +120,32 @@ def create_numbers_semesters_dicts():
 
 
 def convert_semester_number_to_academic_year(semester_number):
-    """convert a semester number (9) to its corresponding academic year (2011)
+    """Convert a semester number (9) to its corresponding academic year (2011).
 
-    :param semester_number: Numeric identifier of a particular semester.
-    :return: A string representation of the year in which the academic year started.
+    Args:
+        semester_number (int): Numeric identifier of a particular semester.
+
+    Returns:
+        A string representation of the year in which the academic year started.
+
     """
+
     return convert_semester_name_to_academic_year(NUMBERS_TO_SEMESTERS_DICT[semester_number])
 
 
 def show_counter_percentages(input_list, digits=3, print_output=False):
-    """Calculate and return percentages of each element in a list.
-
-    :param input_list: List containing the elements to be counted.
-    :param digits: Number of significant digits to use in the percentages.
-    :param print_output: If True, print output to the screen.
-    :return: A list of tuples in the form (list element, % of that element in the list).
     """
+
+    Args:
+        input_list (list): List containing the elements to be counted.
+        digits (int): Number of significant digits to use in the percentages.
+        print_output (bool): If True, print output to the screen.
+
+    Returns:
+        A list of tuples in the form (list element, % of that element in the list).
+
+    """
+
     counts = collections.Counter(input_list).most_common()
     results_list = []
     for each_tuple in counts:
@@ -134,7 +161,12 @@ def convert_semester_name_to_semester_number(semester_name):
 
     Refer to SEMESTERS_LIST in utilities/other_constants.py for a complete list of relevant semesters.
 
-    :param semester_name: A text representation of a particular semester.
-    :return: An integer identifier for that semester as used in this project.
+    Args:
+        semester_name (str): A text representation of a particular semester.
+
+    Returns:
+        An integer identifier for that semester as used in this project.
+
     """
+
     return SEMESTERS_TO_NUMBERS_DICT[semester_name]

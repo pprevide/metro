@@ -26,15 +26,19 @@ def create_spmf_input_file(contacts_df, student_records_dict,
 
     See the SPMF web site for a complete description of the required format.
 
-    :param contacts_df: Pandas dataframe of student records.
-    :param student_records_dict: Python dictionary mapping semester numbers to CourseGroup objects.
-    :param cohort_years: The cohort years of students for whom to generate course sequences.
-    :param passing_only: Include a course only if the student passed it.
-    :param seasons: Consider only these semesters (e.g., fall, winter, spring or summer).
-    :param spmf_input_file_name: Specify the name of the input file.
-    :param capture_gaps: Include semesters in which a student took no classes.
-    :param comp_only: Consider only Comparison students.
-    :return: None.
+    Args:
+        contacts_df (DataFrame): Pandas dataframe of student records.
+        student_records_dict (dict): Dictionary mapping semester numbers to CourseGroup objects.
+        cohort_years (list): The cohort years of students for whom to generate course sequences.
+        passing_only (bool): Include a course only if the student passed it.
+        seasons (list): Consider only these semesters (e.g., fall, winter, spring or summer).
+        spmf_input_file_name (str): The name of the input file.
+        capture_gaps (bool): Include semesters in which a student took no classes.
+        comp_only (bool): Consider only Comparison students.
+
+    Returns:
+        None.
+
     """
 
     spmf_input_file = os.path.join(SPMF_DIR, spmf_input_file_name)
@@ -91,16 +95,21 @@ def run_spmf(input_file_name, output_file_name, min_support, algorithm_name = "C
     Use the SPMF_DIR directory, specified in configuration.py, for the input and output files.
     Use the BIN_DIR directory, also specified in configuration.py, to store the executable itself.
 
-    :param input_file_name: The name of the input file.
-    :param output_file_name: The name of the output file.
-    :param min_support: The minimum support, as a percentage or a floating-point proportion.
-    :param algorithm_name: The SPMF algorithm to run.  "CM-SPADE", the default, is a sequential pattern
-    mining algorithm that will find all sequences of length 1 or greater, as well as the number of
-    records (students) that exhibit that sequence.
-    :param args: Any additional arguments required by the chosen algorithm (none, if the default
-    algorithm is chosen).
-    :return: None.
+    Args:
+        input_file_name (str): The name of the input file.
+        output_file_name (str): The name of the output file.
+        min_support (int or float): The minimum support, as a percentage or a floating-point proportion.
+        algorithm_name (str): The SPMF algorithm to run.  "CM-SPADE", the default, is a sequential pattern
+            mining algorithm that will find all sequences of length 1 or greater, as well as the number of
+            records (students) that exhibit that sequence.
+        *args (): Any additional arguments required by the chosen algorithm (none, if the default
+            algorithm is chosen).
+
+    Returns:
+        None.
+
     """
+
     command = ["java", "-jar", os.path.join(BIN_DIR, SPMF_EXECUTABLE), "run", algorithm_name,
                os.path.join(SPMF_DIR, input_file_name), os.path.join(SPMF_DIR, output_file_name),
                str(min_support)]
@@ -108,37 +117,44 @@ def run_spmf(input_file_name, output_file_name, min_support, algorithm_name = "C
     subprocess.Popen(command)
 
 def determine_sequence_semester_lengths(sequence_list, spmf_file_name):
-    """Determine the length of each sequence, in semesters.
+    """Determine the number of semesters spanned by a particular sub-sequence of courses in a SPMF sequence.
 
     SPMF's sequential pattern mining algorithms return text files that indicate sequences and the number of
-    students who had that sequence.  Longer sequences are of more interest, while sequences of length 1 are not
-    that interesting.  For example, any student who took MATH60 will have the one-item sequence [MATH60].  This
-    function determines the number of semesters captured in each sequence (to continue the MATH60 example, the length
-    would be 1).
+    students who had that sequence.  It can be useful to know how many semesters of a particular student's curriculum
+    are spanned by that sequence.  For example, if SPMF mines a sequence:
+    ["MATH110", "MATH125", "MATH150"]
+    then the courses of the sequence may or may not have been taken one-after-the-other.
+    If it was, then the sequence spans 3 semesters.  If it was not, then this sequence will span 4 or more semesters.
 
-    As another example, in the sequence [MATH60; MATH70; MATH110] the semicolons separate different semesters, so this
-    sequence has length 3.  On the other hand, SPMF can also indicate when multiple courses occur in the same semester,
-    such that [MATH60 MATH70; MATH110] has MATH60 and MATH70 taken concurrently.  In this example, the length of the
-    sequence is 2.
+    This function reads through a single line of the SPMF input file (i.e., the file that was used to generate the
+    mined sequences) and determines: for a particular student, how many semesters were spanned by a particular sequence
+    mined by SPMF.
 
-    :param sequence_list: A course sequence indicated in an SPMF output file for a sequential pattern mining
-    algorithm such as CM-SPADE.
-    :param spmf_file_name: The name of the SPMF output file containing the sequences.
-    :return: Integer number of semesters encompassed by the sequence.
+    Args:
+        sequence_list (list of strings): The sub-sequence of courses for whom the span across a student's curriculum
+            is to be determined.
+        spmf_file_name (str): The name of the SPMF input file, which contains the courses taken by each student.
+
+    Returns:
+        A list of integers, where each integer corresponds to the number of semesters over which each student in the
+            SPMF input file took the courses listed in the argument sequence_list.
+
     """
+    
     lengths_list = []
-    def loc(x, line):
+    # Find the index in the course sequence where a particular course x occurs
+    def loc(course, line):
         for idx, elem in enumerate(line):
-            if x in set(elem.split()):
+            if course in set(elem.split()):
                 return idx
+        # if the element of the search sequence is not found, return large negative number
         return -1000
     with open(os.path.join(SPMF_DIR, spmf_file_name), 'rU') as input_file:
         lines = [x.split(" -1 ") for x in input_file.readlines()]
         for idx, line in enumerate(lines):
+            # Iterate through sequence_list, find index of each element
             occurrences = map(loc, sequence_list, [line]*3)
             if occurrences[2]>occurrences[1] and occurrences[1]>occurrences[0] and sum(occurrences)>0:
-                #print line
-                #print occurrences
                 lengths_list.append(occurrences[2]-occurrences[0]+1)
     return lengths_list
 

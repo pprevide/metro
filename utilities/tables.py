@@ -25,7 +25,9 @@ class Csv:
         read_csv: A modified version of Python's csv file reading functionality
         convert_spss: Calls an R script for converting an spss file into a separated-values (e.g, csv) file
         remove_columns: Convenience function for removing named columns
+
     """
+
     def __init__(self, csv_file,
                  has_header_row=True,
                  provided_headers_list=None,
@@ -44,10 +46,12 @@ class Csv:
     def read_csv(self):
         """Read a csv file and return its column headers and data.
 
-        :return: A tuple consisting of:
-            (1) a list containing column headers, and
-            (2) a list of dictionaries, wherein each dictionary maps a header to the value contained in that column
+        Returns:
+            A tuple consisting of:
+                (1) a list containing column headers, and
+                (2) a list of dictionaries, wherein each dictionary maps a header to the value contained in that column
                  on a row-by-row basis.
+
         """
         with open(self.csv_file, 'rU') as file_object:
             reader = csv.reader(file_object, delimiter=self.delimiter)
@@ -82,10 +86,14 @@ class Csv:
         Note that the default separator is a tab rather than a comma, since in the spss files that this
         function has been used on, the columns of data frequently contain commas.
 
-        :param spss_file_path: Path to the spss file.
-        :param output_file_path: Path to the output file.
-        :param separator: Desired separator (with a tab as default).
-        :return: Path to the output file if conversion was successful.
+        Args:
+            spss_file_path (str): Path to the spss file.
+            output_file_path (str): Path to the output file.
+            separator (str): Desired separator (with a tab as default).
+
+        Returns:
+            Path to the output file if conversion was successful.
+
         """
         conversion_script = "spss_to_table.R"
         cmd = ['Rscript', conversion_script] + [spss_file_path, output_file_path, separator]
@@ -101,12 +109,17 @@ class Csv:
         This function can be used to remove personally-identifying information.  See
         PERSONAL_INFO_COLUMN_NAMES_LIST in other_constants.py.
 
-        :param path: Path to the file from which columns should be removed.
-        :param columns: List of column headers corresponding to columns to be removed.
-        :param anonymize: If true, remove personally-identifying information.
-        :param make_backups: Back up the file before removing the columns.
-        :return: Path(s) to the files from which the columns have been removed.
+        Args:
+            path (str): Path to the file from which columns should be removed.
+            columns (list): List of column headers corresponding to columns to be removed.
+            anonymize (bool): If true, remove personally-identifying information.
+            make_backups (bool): Back up the file before removing the columns.
+
+        Returns:
+            Path(s) to the files from which the columns have been removed.
+
         """
+
         if columns is None: columns = []
         if anonymize: columns.extend(PERSONAL_INFO_COLUMN_NAMES_LIST)
         files = []

@@ -157,7 +157,7 @@ def show_counter_percentages(input_list, digits=3, print_output=False):
 
 
 def convert_semester_name_to_semester_number(semester_name):
-    """Convert a semester name ("Fall 2011") into its corresponding semester number (8).
+    """Convert a semester name ("Fall 2011") into its corresponding semester number (9).
 
     Refer to SEMESTERS_LIST in utilities/other_constants.py for a complete list of relevant semesters.
 
@@ -170,3 +170,56 @@ def convert_semester_name_to_semester_number(semester_name):
     """
 
     return SEMESTERS_TO_NUMBERS_DICT[semester_name]
+
+def convert_cohort_year_to_start_term(year):
+    """Convert a cohort year ("2011") into its corresponding semester number (9).
+
+    Refer to SEMESTERS_LIST in utilities/other_constants.py for a complete list of relevant semesters.
+
+    Args:
+        year (int or float): A floating-point year number
+
+    Returns:
+        An integer identifier for that semester as used in this project.
+
+    """
+    return (int(year) - 2009) * 4 + 1
+
+
+def round_pv(p_value):
+    """Round a floating-point p-value, calculated by a statistical function.
+
+    Statistical tests such as statsmodels.proportions_ztest() return a p-value.
+    This function converts it into a string and rounds it so that it is ready to be shown in a table or graph.
+
+    Args:
+        p_value (float): the p-value to be converted
+
+    Returns: rounded p-value as floating point number
+
+    """
+    try:
+        if p_value > 0.001:
+            return format(p_value, '0.3g')
+        else:
+            return 0.001
+    except ValueError:
+        return p_value
+
+
+def get_pv_symbol(p_value):
+    """Privides an equal or less than symbol as needed for printing the p-value.
+
+    Args:
+        p_value (float): The p-value for which a symbol is to be determined
+
+    Returns: str representation of the needed symbol: less-than or equal sign
+
+    """
+    try:
+        if float(p_value) <= 0.001:
+            return '<'
+        else:
+            return '='
+    except ValueError:
+        return '='

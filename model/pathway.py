@@ -175,7 +175,7 @@ class Pathway:
             Integer semester number, or None if there is no Math course in this Pathway.
 
         """
-        
+
         first_math_semester = None
         try:
             first_course_tuple = self.math_courses_list[0]

@@ -97,6 +97,7 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
     contacts_df = contacts_df[contacts_df["category"].isin(CONTACT_STUDENT_TYPES_DICT.values())]
 
     # Add the students' cohorts
+
     cohort_data_file = os.path.join(DATA_DIR, COHORTS_FILE)
     cohorts_df = pd.read_csv(cohort_data_file,
                              low_memory=False,
@@ -109,8 +110,8 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
                         inplace=True)
     contacts_df['cohort_year'] = contacts_df['cohort'].str[-4:].astype('int32')
     contacts_df['cohort_name'] = contacts_df['cohort'].str[:-5]
-    contacts_df = contacts_df[~contacts_df['cohort_year'].isin([2017])]
-
+    if contacts_through_2016:
+        contacts_df = contacts_df[~contacts_df['cohort_year'].isin([2017, 2018])]
     # Create pools for Metro students, comparison students, and both
     combined_students_set = set(contacts_df.loc[contacts_df["category"]
                              .isin(["Metro", "Comp"]), "student_id"]
@@ -189,8 +190,10 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
         df = pd.read_csv(os.path.join((os.path.join(DATA_DIR, "IR_data")), f),
                          usecols=IR_DATA_DICT.keys(),
                          dtype=str)
+        df["cohort_year_term"] = df["cohort_year_term"].map(lambda y: y[:-1])
         ir_df = pd.concat([ir_df, df], ignore_index=True)
     ir_df.rename(columns=IR_DATA_DICT, inplace=True)
+
     # Students who withdrew, then started again, appear in the IR data twice
     # Keep the latter record for those students
     ir_df.set_index(keys='student_id', inplace=True, drop=False)
@@ -225,6 +228,9 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
     contacts_df.loc[~contacts_df["household_income"].isin(INCOME_CATEGORIES_DICT.values()),
                     "household_income"] = np.nan
 
+    # Label all non-Metro and non-Comparison students as being in "other" category
+    contacts_df.loc[~contacts_df["category"].isin(["Metro", "Comp"]), "category"] = "Other"
+
     if attributes_only:
         if metro_only:
             contacts_df = contacts_df[contacts_df["category"] == "Metro"]
@@ -235,7 +241,7 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
                        "comp": comp_students_set,
                        "combined": combined_students_set}
         return contacts_df, None, roster_dict
-
+    
     #################################
     ##### Enrollment Processing #####
     #################################
@@ -304,63 +310,67 @@ def preprocessing(metro_only=False, metro_comp=False, contacts_through_2016=True
                 term_CourseGroup_dict[semester_number] = new_CourseGroup
                 student_record_dict[student_id] = term_CourseGroup_dict
 
-    # need the student_records_dict to be limited only to its comp students
-    comp_students_full_set = set(contacts_df["student_id"].values).intersection(student_record_dict)
-    contacts_df = contacts_df[contacts_df["student_id"].isin(comp_students_full_set)]
+    # need the student_records_dict to be limited only to students who registered at some point
+    students_full_set = set(contacts_df["student_id"].values).intersection(student_record_dict)
+    contacts_df = contacts_df[contacts_df["student_id"].isin(students_full_set)]
 
     # Use this student_records_dict to compute
     #     (1) core-pathway progress (0 for Comp students) and
     #     (2) 4th-term completion
     # Add these fields to each student record
 
-    progress_df = pd.DataFrame(columns=["student_id", "core_progress"])
-    fourth_term_completion_df = pd.DataFrame(columns=["student_id", "fourth_completion"])
-    for idx, student_id in enumerate(student_record_dict):
-        this_student_records_dict = student_record_dict[student_id]
-        cohort_year = str(int(contacts_df.loc[contacts_df["student_id"] == student_id, "cohort_year"].item()))
-        first_term_numeric = SEMESTERS_TO_NUMBERS_DICT["Fall "+cohort_year]
-        first_4_terms_set = set(range(first_term_numeric, first_term_numeric+7, 2))
-        if first_term_numeric+6 not in this_student_records_dict.keys()\
-                or len(first_4_terms_set.intersection(this_student_records_dict.keys()))<3:
-            fourth_completion = False
-        else:
+    if not(metro_only==False and metro_comp==False):
+        progress_df = pd.DataFrame(columns=["student_id", "core_progress"])
+        fourth_term_completion_df = pd.DataFrame(columns=["student_id", "fourth_completion"])
+        for idx, student_id in enumerate(student_record_dict):
+            this_student_records_dict = student_record_dict[student_id]
             try:
-                fourthcoursegroup = this_student_records_dict[first_term_numeric+6]
-                incomplete = True
-                courses = []
-                for this_course in fourthcoursegroup.course_list:
-                    courses.append( (this_course.course, this_course.grade_letter))
-                    if this_course.grade_letter not in INCOMPLETE_GRADES:
-                        incomplete = False
-                        fourth_completion = True
-                        break
-                if incomplete:
-                    fourth_completion = False
-            except KeyError:
+                cohort_year = str(int(contacts_df.loc[contacts_df["student_id"] == student_id, "cohort_year"].item()))
+            except ValueError:
+                continue
+            first_term_numeric = SEMESTERS_TO_NUMBERS_DICT["Fall "+cohort_year]
+            first_4_terms_set = set(range(first_term_numeric, first_term_numeric+7, 2))
+            if first_term_numeric+6 not in this_student_records_dict.keys()\
+                    or len(first_4_terms_set.intersection(this_student_records_dict.keys()))<3:
                 fourth_completion = False
-        fourth_term_completion_df = fourth_term_completion_df\
-            .append(pd.DataFrame({"student_id":[student_id],
-                                  "fourth_completion": [fourth_completion]}),
-                    ignore_index=True)
-        # Now populate the progress data frame
-        # Metro students have a Pathway - compute how many courses from it were taken
-        # Comp students do not have a Pathway: core progress is 0
-        try:
-            pathway_obj = contacts_df.loc[contacts_df["student_id"] == student_id, "Pathway"].item()
-            core_courses_list = pathway_obj.get_core_sequence_list()
-            this_student_courses_set = set()
-            for each_CourseGroup in this_student_records_dict.values():
-                this_student_courses_set.update(each_CourseGroup.passing_course_names_set)
-            this_student_progress = len(list(set(core_courses_list).intersection(this_student_courses_set)))
-        except AttributeError:
-            this_student_progress = 0
-        progress_df = progress_df.append(
-            pd.DataFrame(
-                {"student_id": [student_id], "core_progress": [this_student_progress]}
-            ), ignore_index=True)
-    progress_df["core_progress"] = progress_df["core_progress"].astype('int8')
-    contacts_df = contacts_df.merge(progress_df, how="outer", on="student_id") \
-        .merge(fourth_term_completion_df, how = "outer", on="student_id")
+            else:
+                try:
+                    fourthcoursegroup = this_student_records_dict[first_term_numeric+6]
+                    incomplete = True
+                    courses = []
+                    for this_course in fourthcoursegroup.course_list:
+                        courses.append( (this_course.course, this_course.grade_letter))
+                        if this_course.grade_letter not in INCOMPLETE_GRADES:
+                            incomplete = False
+                            fourth_completion = True
+                            break
+                    if incomplete:
+                        fourth_completion = False
+                except KeyError:
+                    fourth_completion = False
+            fourth_term_completion_df = fourth_term_completion_df\
+                .append(pd.DataFrame({"student_id":[student_id],
+                                      "fourth_completion": [fourth_completion]}),
+                        ignore_index=True)
+            # Now populate the progress data frame
+            # Metro students have a Pathway - compute how many courses from it were taken
+            # Comp students do not have a Pathway: core progress is 0
+            try:
+                pathway_obj = contacts_df.loc[contacts_df["student_id"] == student_id, "Pathway"].item()
+                core_courses_list = pathway_obj.get_core_sequence_list()
+                this_student_courses_set = set()
+                for each_CourseGroup in this_student_records_dict.values():
+                    this_student_courses_set.update(each_CourseGroup.passing_course_names_set)
+                this_student_progress = len(list(set(core_courses_list).intersection(this_student_courses_set)))
+            except AttributeError:
+                this_student_progress = 0
+            progress_df = progress_df.append(
+                pd.DataFrame(
+                    {"student_id": [student_id], "core_progress": [this_student_progress]}
+                ), ignore_index=True)
+        progress_df["core_progress"] = progress_df["core_progress"].astype('int8')
+        contacts_df = contacts_df.merge(progress_df, how="outer", on="student_id") \
+            .merge(fourth_term_completion_df, how = "outer", on="student_id")
 
     # Prepare the data structures to be returned to the caller
 
